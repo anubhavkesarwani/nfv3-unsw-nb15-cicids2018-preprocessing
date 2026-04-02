@@ -384,6 +384,70 @@ Coverage status: 15 dataset classes mapped, 0 missing keys, 0 extra keys.
 
 ---
 
+# Further Note: Secondary 50:50 Rebalancing Audit
+
+This section documents an additional deterministic rebalancing stage applied after the previously prepared datasets. The resulting files are saved as `dataset.csv` in each dataset directory, with corresponding machine-readable audit records in `dataset_rebalance_report.json`.
+
+Methodological characteristics of this stage:
+
+- Binary target ratio: `Label 0 : Label 1 = 1 : 1`
+- Downsample-only procedure (no oversampling)
+- Minority preservation on the downsampled side (threshold defined in each audit JSON)
+- Deterministic allocation with `random_state = 0`
+
+## Rebalance Artifacts
+
+- `NF-UNSW-NB15-v3/dataset.csv`
+- `NF-UNSW-NB15-v3/dataset_rebalance_report.json`
+- `NF-CICIDS2018-v3/dataset.csv`
+- `NF-CICIDS2018-v3/dataset_rebalance_report.json`
+
+## Aggregate Outcomes
+
+| Dataset | Rows Before | Rows After | Label 0 After | Label 1 After | Max Abs Attack-Share Delta | Minority Preservation Rate |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| NF-UNSW-NB15-v3 | 191,423 | 127,488 | 63,744 | 63,744 | 0.018704 | 100.00% |
+| NF-CICIDS2018-v3 | 300,000 | 198,000 | 99,000 | 99,000 | 0.008842 | 100.00% |
+
+Interpretation: the second-stage rebalance achieved exact binary parity in both datasets while preserving all identified minority classes on the downsampled side.
+
+## Distribution Change: NF-UNSW-NB15-v3
+
+Mapping source: `NF-UNSW-NB15-v3/NF-UNSW-NB15-v3_map.json`
+
+| Family | Initial Count | Final Count | Absolute Change | Percent Change |
+| --- | ---: | ---: | ---: | ---: |
+| BENIGN | 63,744 | 63,744 | 0 | 0.00% |
+| Exploits | 42,744 | 20,690 | -22,054 | -51.60% |
+| Fuzzers | 33,816 | 16,368 | -17,448 | -51.60% |
+| Generic | 19,651 | 9,512 | -10,139 | -51.60% |
+| Reconnaissance | 17,074 | 8,264 | -8,810 | -51.60% |
+| DoS | 5,971 | 2,890 | -3,081 | -51.60% |
+| Backdoor | 4,658 | 2,255 | -2,403 | -51.59% |
+| Shellcode | 2,381 | 2,381 | 0 | 0.00% |
+| Analysis | 1,226 | 1,226 | 0 | 0.00% |
+| Worms | 158 | 158 | 0 | 0.00% |
+
+Interpretation: most non-minority attack families were approximately halved, whereas identified minority families (`Shellcode`, `Analysis`, `Worms`) were preserved exactly.
+
+## Distribution Change: NF-CICIDS2018-v3
+
+Mapping source: `NF-CICIDS2018-v3/NF-CICIDS2018-v3_map.json`
+
+| Family | Initial Count | Final Count | Absolute Change | Percent Change |
+| --- | ---: | ---: | ---: | ---: |
+| BENIGN | 99,000 | 99,000 | 0 | 0.00% |
+| DDoS | 41,076 | 20,676 | -20,400 | -49.66% |
+| Bot | 39,352 | 18,952 | -20,400 | -51.84% |
+| Brute Force | 39,352 | 18,952 | -20,400 | -51.84% |
+| DoS | 39,351 | 18,951 | -20,400 | -51.84% |
+| Infiltration | 39,351 | 18,951 | -20,400 | -51.84% |
+| Web Attack | 2,518 | 2,518 | 0 | 0.00% |
+
+Interpretation: family-level attack mass was reduced nearly uniformly among non-minority families, while minority web-attack categories were preserved, maintaining rare-event evidence under exact binary balancing.
+
+---
+
 ## References
 
 - UQ NIDS dataset portal: `https://staff.itee.uq.edu.au/marius/NIDS_datasets/`

@@ -1,0 +1,282 @@
+{
+  "generated_at_utc": "2026-04-02T08:46:12.965062+00:00",
+  "source_file": "NF-CICIDS2018-v3/NF-CICIDS2018-v3.csv",
+  "balanced_file": "NF-CICIDS2018-v3/dataset.csv",
+  "method": {
+    "objective": "Binary rebalance to 1:1 while preserving minority classes and proportional class structure on the downsampled side",
+    "random_state": 0,
+    "downsample_only": true,
+    "minority_definition": "Classes with count <= 2.00% of downsampled-side total in source dataset",
+    "allocation": "Integer proportional allocation with largest-remainder tie handling"
+  },
+  "dataset_sizes": {
+    "rows_before": 300000,
+    "rows_after": 198000
+  },
+  "binary_label_distribution": {
+    "before_counts": {
+      "0": 99000,
+      "1": 201000
+    },
+    "after_counts": {
+      "0": 99000,
+      "1": 99000
+    },
+    "before_shares": {
+      "0": 0.33,
+      "1": 0.67
+    },
+    "after_shares": {
+      "0": 0.5,
+      "1": 0.5
+    },
+    "target_achieved_1_to_1": true
+  },
+  "downsampled_side": {
+    "label": 1,
+    "before_total": 201000,
+    "after_total": 99000,
+    "minority_threshold_count": 4020,
+    "minority_classes_identified": [
+      "DDOS_attack-LOIC-UDP",
+      "Brute_Force_-Web",
+      "Brute_Force_-XSS",
+      "SQL_Injection"
+    ],
+    "minority_classes_preserved": [
+      "DDOS_attack-LOIC-UDP",
+      "Brute_Force_-Web",
+      "Brute_Force_-XSS",
+      "SQL_Injection"
+    ],
+    "minority_preservation_rate": 1.0,
+    "class_comparison": [
+      {
+        "class": "Bot",
+        "before_count": 39352,
+        "after_count": 18952,
+        "before_share": 0.1957810945273632,
+        "after_share": 0.19143434343434343,
+        "abs_share_delta": 0.004346751093019768,
+        "relative_count_change": -0.5183980483838179
+      },
+      {
+        "class": "Infilteration",
+        "before_count": 39351,
+        "after_count": 18951,
+        "before_share": 0.1957761194029851,
+        "after_share": 0.1914242424242424,
+        "abs_share_delta": 0.004351876978742675,
+        "relative_count_change": -0.5184112220782191
+      },
+      {
+        "class": "FTP-BruteForce",
+        "before_count": 19676,
+        "after_count": 9476,
+        "before_share": 0.0978905472636816,
+        "after_share": 0.09571717171717171,
+        "abs_share_delta": 0.002173375546509884,
+        "relative_count_change": -0.5183980483838179
+      },
+      {
+        "class": "SSH-Bruteforce",
+        "before_count": 19676,
+        "after_count": 9476,
+        "before_share": 0.0978905472636816,
+        "after_share": 0.09571717171717171,
+        "abs_share_delta": 0.002173375546509884,
+        "relative_count_change": -0.5183980483838179
+      },
+      {
+        "class": "DDOS_attack-HOIC",
+        "before_count": 19676,
+        "after_count": 9476,
+        "before_share": 0.0978905472636816,
+        "after_share": 0.09571717171717171,
+        "abs_share_delta": 0.002173375546509884,
+        "relative_count_change": -0.5183980483838179
+      },
+      {
+        "class": "DDoS_attacks-LOIC-HTTP",
+        "before_count": 19675,
+        "after_count": 9475,
+        "before_share": 0.09788557213930349,
+        "after_share": 0.09570707070707071,
+        "abs_share_delta": 0.0021785014322327767,
+        "relative_count_change": -0.5184243964421855
+      },
+      {
+        "class": "DoS_attacks-Hulk",
+        "before_count": 9838,
+        "after_count": 4738,
+        "before_share": 0.0489452736318408,
+        "after_share": 0.04785858585858586,
+        "abs_share_delta": 0.001086687773254942,
+        "relative_count_change": -0.5183980483838179
+      },
+      {
+        "class": "DoS_attacks-SlowHTTPTest",
+        "before_count": 9838,
+        "after_count": 4738,
+        "before_share": 0.0489452736318408,
+        "after_share": 0.04785858585858586,
+        "abs_share_delta": 0.001086687773254942,
+        "relative_count_change": -0.5183980483838179
+      },
+      {
+        "class": "DoS_attacks-GoldenEye",
+        "before_count": 9838,
+        "after_count": 4738,
+        "before_share": 0.0489452736318408,
+        "after_share": 0.04785858585858586,
+        "abs_share_delta": 0.001086687773254942,
+        "relative_count_change": -0.5183980483838179
+      },
+      {
+        "class": "DoS_attacks-Slowloris",
+        "before_count": 9837,
+        "after_count": 4737,
+        "before_share": 0.04894029850746268,
+        "after_share": 0.04784848484848485,
+        "abs_share_delta": 0.0010918136589778346,
+        "relative_count_change": -0.518450747179018
+      },
+      {
+        "class": "DDOS_attack-LOIC-UDP",
+        "before_count": 1725,
+        "after_count": 1725,
+        "before_share": 0.008582089552238806,
+        "after_share": 0.017424242424242425,
+        "abs_share_delta": 0.00884215287200362,
+        "relative_count_change": 0.0
+      },
+      {
+        "class": "Brute_Force_-Web",
+        "before_count": 1618,
+        "after_count": 1618,
+        "before_share": 0.008049751243781095,
+        "after_share": 0.016343434343434344,
+        "abs_share_delta": 0.008293683099653249,
+        "relative_count_change": 0.0
+      },
+      {
+        "class": "Brute_Force_-XSS",
+        "before_count": 460,
+        "after_count": 460,
+        "before_share": 0.0022885572139303484,
+        "after_share": 0.004646464646464647,
+        "abs_share_delta": 0.0023579074325342985,
+        "relative_count_change": 0.0
+      },
+      {
+        "class": "SQL_Injection",
+        "before_count": 440,
+        "after_count": 440,
+        "before_share": 0.0021890547263681594,
+        "after_share": 0.0044444444444444444,
+        "abs_share_delta": 0.002255389718076285,
+        "relative_count_change": 0.0
+      }
+    ],
+    "distribution_stability_metrics": {
+      "max_abs_share_delta": 0.00884215287200362,
+      "mean_abs_share_delta": 0.0031070190174667845,
+      "median_abs_share_delta": 0.0021759384893713304
+    },
+    "rank_changes": [
+      {
+        "class": "Bot",
+        "before_rank": 1,
+        "after_rank": 1,
+        "rank_shift": 0
+      },
+      {
+        "class": "Infilteration",
+        "before_rank": 2,
+        "after_rank": 2,
+        "rank_shift": 0
+      },
+      {
+        "class": "FTP-BruteForce",
+        "before_rank": 3,
+        "after_rank": 4,
+        "rank_shift": 1
+      },
+      {
+        "class": "SSH-Bruteforce",
+        "before_rank": 4,
+        "after_rank": 5,
+        "rank_shift": 1
+      },
+      {
+        "class": "DDOS_attack-HOIC",
+        "before_rank": 5,
+        "after_rank": 3,
+        "rank_shift": -2
+      },
+      {
+        "class": "DDoS_attacks-LOIC-HTTP",
+        "before_rank": 6,
+        "after_rank": 6,
+        "rank_shift": 0
+      },
+      {
+        "class": "DoS_attacks-GoldenEye",
+        "before_rank": 7,
+        "after_rank": 7,
+        "rank_shift": 0
+      },
+      {
+        "class": "DoS_attacks-SlowHTTPTest",
+        "before_rank": 8,
+        "after_rank": 9,
+        "rank_shift": 1
+      },
+      {
+        "class": "DoS_attacks-Hulk",
+        "before_rank": 9,
+        "after_rank": 8,
+        "rank_shift": -1
+      },
+      {
+        "class": "DoS_attacks-Slowloris",
+        "before_rank": 10,
+        "after_rank": 10,
+        "rank_shift": 0
+      },
+      {
+        "class": "DDOS_attack-LOIC-UDP",
+        "before_rank": 11,
+        "after_rank": 11,
+        "rank_shift": 0
+      },
+      {
+        "class": "Brute_Force_-Web",
+        "before_rank": 12,
+        "after_rank": 12,
+        "rank_shift": 0
+      },
+      {
+        "class": "Brute_Force_-XSS",
+        "before_rank": 13,
+        "after_rank": 13,
+        "rank_shift": 0
+      },
+      {
+        "class": "SQL_Injection",
+        "before_rank": 14,
+        "after_rank": 14,
+        "rank_shift": 0
+      }
+    ],
+    "majority_class_before": "Bot",
+    "majority_class_after": "Bot",
+    "majority_class_preserved": true
+  },
+  "constraints_check": {
+    "minority_side_unchanged": true,
+    "downsample_only_confirmed": true,
+    "binary_balance_achieved": true,
+    "former_majority_not_below_minority": true
+  }
+}

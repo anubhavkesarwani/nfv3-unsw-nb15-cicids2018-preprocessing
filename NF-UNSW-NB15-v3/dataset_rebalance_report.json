@@ -1,0 +1,205 @@
+{
+  "generated_at_utc": "2026-04-02T08:46:10.235415+00:00",
+  "source_file": "NF-UNSW-NB15-v3/NF-UNSW-NB15-v3.csv",
+  "balanced_file": "NF-UNSW-NB15-v3/dataset.csv",
+  "method": {
+    "objective": "Binary rebalance to 1:1 while preserving minority classes and proportional class structure on the downsampled side",
+    "random_state": 0,
+    "downsample_only": true,
+    "minority_definition": "Classes with count <= 2.00% of downsampled-side total in source dataset",
+    "allocation": "Integer proportional allocation with largest-remainder tie handling"
+  },
+  "dataset_sizes": {
+    "rows_before": 191423,
+    "rows_after": 127488
+  },
+  "binary_label_distribution": {
+    "before_counts": {
+      "0": 63744,
+      "1": 127679
+    },
+    "after_counts": {
+      "0": 63744,
+      "1": 63744
+    },
+    "before_shares": {
+      "0": 0.3330007365886022,
+      "1": 0.6669992634113978
+    },
+    "after_shares": {
+      "0": 0.5,
+      "1": 0.5
+    },
+    "target_achieved_1_to_1": true
+  },
+  "downsampled_side": {
+    "label": 1,
+    "before_total": 127679,
+    "after_total": 63744,
+    "minority_threshold_count": 2553,
+    "minority_classes_identified": [
+      "Shellcode",
+      "Analysis",
+      "Worms"
+    ],
+    "minority_classes_preserved": [
+      "Shellcode",
+      "Analysis",
+      "Worms"
+    ],
+    "minority_preservation_rate": 1.0,
+    "class_comparison": [
+      {
+        "class": "Exploits",
+        "before_count": 42744,
+        "after_count": 20690,
+        "before_share": 0.33477705809099384,
+        "after_share": 0.32457956827309237,
+        "abs_share_delta": 0.010197489817901473,
+        "relative_count_change": -0.5159554557364776
+      },
+      {
+        "class": "Fuzzers",
+        "before_count": 33816,
+        "after_count": 16368,
+        "before_share": 0.2648516983998935,
+        "after_share": 0.2567771084337349,
+        "abs_share_delta": 0.008074589966158563,
+        "relative_count_change": -0.5159687721788503
+      },
+      {
+        "class": "Generic",
+        "before_count": 19651,
+        "after_count": 9512,
+        "before_share": 0.15390941345091988,
+        "after_share": 0.1492218875502008,
+        "abs_share_delta": 0.004687525900719081,
+        "relative_count_change": -0.515953386596102
+      },
+      {
+        "class": "Reconnaissance",
+        "before_count": 17074,
+        "after_count": 8264,
+        "before_share": 0.13372598469599542,
+        "after_share": 0.12964357429718876,
+        "abs_share_delta": 0.004082410398806663,
+        "relative_count_change": -0.5159892233805786
+      },
+      {
+        "class": "DoS",
+        "before_count": 5971,
+        "after_count": 2890,
+        "before_share": 0.04676571715004033,
+        "after_share": 0.04533760040160643,
+        "abs_share_delta": 0.0014281167484339052,
+        "relative_count_change": -0.5159939708591526
+      },
+      {
+        "class": "Backdoor",
+        "before_count": 4658,
+        "after_count": 2255,
+        "before_share": 0.03648211530478779,
+        "after_share": 0.03537587851405623,
+        "abs_share_delta": 0.0011062367907315601,
+        "relative_count_change": -0.5158866466294547
+      },
+      {
+        "class": "Shellcode",
+        "before_count": 2381,
+        "after_count": 2381,
+        "before_share": 0.018648329012601914,
+        "after_share": 0.03735253514056225,
+        "abs_share_delta": 0.018704206127960334,
+        "relative_count_change": 0.0
+      },
+      {
+        "class": "Analysis",
+        "before_count": 1226,
+        "after_count": 1226,
+        "before_share": 0.009602205531058358,
+        "after_share": 0.019233182730923695,
+        "abs_share_delta": 0.009630977199865337,
+        "relative_count_change": 0.0
+      },
+      {
+        "class": "Worms",
+        "before_count": 158,
+        "after_count": 158,
+        "before_share": 0.001237478363708989,
+        "after_share": 0.002478664658634538,
+        "abs_share_delta": 0.0012411862949255493,
+        "relative_count_change": 0.0
+      }
+    ],
+    "distribution_stability_metrics": {
+      "max_abs_share_delta": 0.018704206127960334,
+      "mean_abs_share_delta": 0.0065725265828336064,
+      "median_abs_share_delta": 0.004687525900719081
+    },
+    "rank_changes": [
+      {
+        "class": "Exploits",
+        "before_rank": 1,
+        "after_rank": 1,
+        "rank_shift": 0
+      },
+      {
+        "class": "Fuzzers",
+        "before_rank": 2,
+        "after_rank": 2,
+        "rank_shift": 0
+      },
+      {
+        "class": "Generic",
+        "before_rank": 3,
+        "after_rank": 3,
+        "rank_shift": 0
+      },
+      {
+        "class": "Reconnaissance",
+        "before_rank": 4,
+        "after_rank": 4,
+        "rank_shift": 0
+      },
+      {
+        "class": "DoS",
+        "before_rank": 5,
+        "after_rank": 5,
+        "rank_shift": 0
+      },
+      {
+        "class": "Backdoor",
+        "before_rank": 6,
+        "after_rank": 7,
+        "rank_shift": 1
+      },
+      {
+        "class": "Shellcode",
+        "before_rank": 7,
+        "after_rank": 6,
+        "rank_shift": -1
+      },
+      {
+        "class": "Analysis",
+        "before_rank": 8,
+        "after_rank": 8,
+        "rank_shift": 0
+      },
+      {
+        "class": "Worms",
+        "before_rank": 9,
+        "after_rank": 9,
+        "rank_shift": 0
+      }
+    ],
+    "majority_class_before": "Exploits",
+    "majority_class_after": "Exploits",
+    "majority_class_preserved": true
+  },
+  "constraints_check": {
+    "minority_side_unchanged": true,
+    "downsample_only_confirmed": true,
+    "binary_balance_achieved": true,
+    "former_majority_not_below_minority": true
+  }
+}
