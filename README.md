@@ -1,127 +1,139 @@
-# NF-UNSW-NB15-v3 and NF-CICIDS2018-v3 Preparation Journal
+# Data Preparation Report for NF-UNSW-NB15-v3 and NF-CICIDS2018-v3
 
-This document records the full preprocessing, cleaning, balancing, and mapping workflow used to produce the current final CSV artifacts and map files.
+## Scope
 
-## 1) Processing flow used in both pipelines
+This report documents the completed data preparation process for two NetFlow-based intrusion datasets:
 
-1. Load data with strict schema validation.
-- Expected columns: 55 NetFlow v3 fields (`FLOW_START_MILLISECONDS` ... `Label`, `Attack`).
-- Any missing or unexpected columns fail the run.
+- `NF-UNSW-NB15-v3`
+- `NF-CICIDS2018-v3`
 
-2. Normalize text fields before any numeric processing.
-- IP columns are string-normalized by trimming whitespace and replacing empty/null-like values with canonical placeholders.
-- `Attack` text is canonicalized (trim/lowercase first, then normalized to canonical class names).
-
-3. Coerce every numeric field to numeric and standardize non-finite values.
-- `pd.to_numeric(..., errors="coerce")` behavior is applied to numeric features.
-- `+inf/-inf` are converted to `NaN`.
-- Per-column counters are tracked for:
-  - non-numeric to `NaN`
-  - `inf` to `NaN`
-
-4. Rebuild binary label semantics from attack label.
-- `Label = 0` iff `Attack == Benign`
-- `Label = 1` otherwise.
-- Any source label mismatch is counted and corrected.
-
-5. Enforce temporal integrity.
-- If `FLOW_END_MILLISECONDS < FLOW_START_MILLISECONDS`, swap them.
-- Recompute/impute `FLOW_DURATION_MILLISECONDS` from timestamps when missing or inconsistent.
-
-6. Enforce min/max pair ordering constraints.
-- Swap if violated:
-  - `MIN_TTL` and `MAX_TTL`
-  - `SHORTEST_FLOW_PKT` and `LONGEST_FLOW_PKT`
-  - `MIN_IP_PKT_LEN` and `MAX_IP_PKT_LEN`
-
-7. Repair zero-duration throughput edge cases.
-- For zero-duration flows, non-finite directional throughput/rate fields are forced to `0.0`.
-
-8. Apply validity bounds and clipping rules.
-- Non-negative clipping on count/size/duration-like numeric fields.
-- Range clipping on bounded protocol fields, including:
-  - ports: `[0, 65535]`
-  - protocol/TTL/TCP flags: `[0, 255]` where applicable
-  - DNS ID/type: `[0, 65535]`
-  - DNS TTL answer: `[0, 4294967295]`
-  - binary label: `[0, 1]`
-
-9. Fill remaining `NaN` values deterministically.
-- Float-designated columns use float median fill.
-- Integer-designated columns use rounded integer median fill.
-
-10. Remove exact duplicate rows.
-- Row-level exact duplicates are removed.
-- Duplicate accounting is recorded.
-
-11. Remove high-leakage identifier/time columns from final export.
-- Dropped columns:
-  - `IPV4_SRC_ADDR`
-  - `IPV4_DST_ADDR`
-  - `FLOW_START_MILLISECONDS`
-  - `FLOW_END_MILLISECONDS`
-
-12. Enforce deterministic output.
-- Fixed random seed (`random_state=0`) for all randomized downsampling/shuffling operations.
-
-13. Export final CSV and JSON summary.
-- Persist final row/column shape, class distributions, label distributions, cleaning counters, and mapping metadata.
+The objective of the process was to produce reproducible, cleaned, deduplicated, and class-controlled datasets suitable for downstream machine learning experiments.
 
 ---
 
-## 2) NF-UNSW-NB15-v3 (final state)
+## Shared Processing Protocol
 
-### 2.1 Input and structural checks
-- Input file: `NF-UNSW-NB15-v3/data/NF-UNSW-NB15-v3.csv`
-- Input shape: `2,365,424 x 55`
+The following procedure was applied in both pipelines.
 
-### 2.2 Cleaning actions with non-zero impact
-- `SRC_TO_DST_SECOND_BYTES_inf_to_nan`: `59,068`
-- `DST_TO_SRC_SECOND_BYTES_inf_to_nan`: `122,493`
-- `SRC_TO_DST_SECOND_BYTES_zero_duration_nonfinite_fixed`: `122,493`
-- `DST_TO_SRC_SECOND_BYTES_zero_duration_nonfinite_fixed`: `122,493`
+1. **Schema validation**
+   - All records were validated against the expected NetFlow v3 schema (55 columns).
+   - Rows were processed only when schema conformity was satisfied.
 
-### 2.3 Deduplication
-- Exact duplicate rows detected: `14,815`
-- Exact duplicate rows removed: `14,815`
-- Shape after clean+dedup: `2,350,609 x 55`
+2. **Text normalization**
+   - Text fields were canonicalized by trimming whitespace and normalizing null-like tokens.
+   - Attack labels were normalized to canonical class strings before any class-level operations.
 
-### 2.4 Label balancing
-- Objective used: benign/attack `50:50` via benign downsampling only.
-- Before balancing:
-  - benign: `2,222,930`
-  - attack: `127,679`
-- Benign rows removed for balance: `2,095,251`
-- After balancing:
-  - benign: `127,679`
-  - attack: `127,679`
-  - rows: `255,358`
+3. **Numeric coercion and finite-value enforcement**
+   - Numeric fields were coerced using strict numeric conversion.
+   - Non-finite values (`±inf`) were converted to missing values (`NaN`) and tracked.
 
-### 2.5 Column dropping
-- Dropped:
-  - `IPV4_SRC_ADDR`
-  - `IPV4_DST_ADDR`
-  - `FLOW_START_MILLISECONDS`
-  - `FLOW_END_MILLISECONDS`
-- Final shape: `255,358 x 51`
+4. **Binary label consistency enforcement**
+   - `Label` was enforced as: `0` for `Benign`, `1` for all attack classes.
+   - Any mismatch between source `Label` and `Attack` semantics was corrected.
 
-### 2.6 Final class distribution (`Attack`)
-- `Benign`: `127,679`
-- `Exploits`: `42,744`
-- `Fuzzers`: `33,816`
-- `Generic`: `19,651`
-- `Reconnaissance`: `17,074`
-- `DoS`: `5,971`
-- `Backdoor`: `4,658`
-- `Shellcode`: `2,381`
-- `Analysis`: `1,226`
-- `Worms`: `158`
+5. **Temporal consistency checks**
+   - Start/end timestamps were repaired where ordering was invalid.
+   - Flow duration was recomputed or imputed from timestamps when required.
 
-### 2.7 Final binary label distribution (`Label`)
-- `0`: `127,679`
-- `1`: `127,679`
+6. **Pairwise ordering constraints**
+   - The following lower/upper pairs were repaired when violated:
+     - `MIN_TTL` / `MAX_TTL`
+     - `SHORTEST_FLOW_PKT` / `LONGEST_FLOW_PKT`
+     - `MIN_IP_PKT_LEN` / `MAX_IP_PKT_LEN`
 
-### 2.8 Final mapping state
+7. **Zero-duration throughput repair**
+   - For zero-duration flows, non-finite directional rate fields were set to `0.0`.
+
+8. **Range and sign constraints**
+   - Non-negative constraints were enforced on count/size/duration features.
+   - Bounded fields were clipped to protocol-valid ranges (ports, protocol IDs, TTL, flags, DNS ranges, and binary label bounds).
+
+9. **Missing-value completion**
+   - Remaining missing values were imputed deterministically:
+     - median imputation for float fields
+     - rounded median imputation for integer fields
+
+10. **Exact duplicate removal**
+    - Exact row duplicates were identified and removed.
+    - Duplicate statistics were retained in the summary reports.
+
+11. **Identifier and timestamp drop policy**
+    - The following columns were removed from final exports:
+      - `IPV4_SRC_ADDR`
+      - `IPV4_DST_ADDR`
+      - `FLOW_START_MILLISECONDS`
+      - `FLOW_END_MILLISECONDS`
+
+12. **Deterministic sampling**
+    - Randomized operations used `random_state = 0` for reproducibility.
+
+---
+
+## Final State: NF-UNSW-NB15-v3
+
+### Input and Output
+
+| Item | Value |
+| --- | --- |
+| Input file | `NF-UNSW-NB15-v3/data/NF-UNSW-NB15-v3.csv` |
+| Input shape | `2,365,424 × 55` |
+| Output file | `NF-UNSW-NB15-v3/NF-UNSW-NB15-v3.csv` |
+| Output shape | `191,423 × 51` |
+
+### Non-zero cleaning effects
+
+| Metric | Count |
+| --- | ---: |
+| `SRC_TO_DST_SECOND_BYTES_inf_to_nan` | 59,068 |
+| `DST_TO_SRC_SECOND_BYTES_inf_to_nan` | 122,493 |
+| `SRC_TO_DST_SECOND_BYTES_zero_duration_nonfinite_fixed` | 122,493 |
+| `DST_TO_SRC_SECOND_BYTES_zero_duration_nonfinite_fixed` | 122,493 |
+
+### Deduplication
+
+| Metric | Count |
+| --- | ---: |
+| Exact duplicates detected | 14,815 |
+| Exact duplicates removed | 14,815 |
+| Rows after clean + dedup | 2,350,609 |
+
+### Class-control step
+
+Benign traffic was downsampled to target approximately **33.3%** of final rows while preserving all attack rows after cleaning and deduplication.
+
+| Metric | Count |
+| --- | ---: |
+| Benign before downsampling | 2,222,930 |
+| Attack before downsampling | 127,679 |
+| Benign removed | 2,159,186 |
+| Benign after downsampling | 63,744 |
+| Attack after downsampling | 127,679 |
+| Final benign share | 33.3001% |
+
+### Final attack distribution
+
+| Attack class | Count | Share |
+| --- | ---: | ---: |
+| Benign | 63,744 | 33.3001% |
+| Exploits | 42,744 | 22.3296% |
+| Fuzzers | 33,816 | 17.6656% |
+| Generic | 19,651 | 10.2657% |
+| Reconnaissance | 17,074 | 8.9195% |
+| DoS | 5,971 | 3.1193% |
+| Backdoor | 4,658 | 2.4334% |
+| Shellcode | 2,381 | 1.2438% |
+| Analysis | 1,226 | 0.6405% |
+| Worms | 158 | 0.0825% |
+
+### Final label distribution
+
+| Label | Count |
+| --- | ---: |
+| `0` | 63,744 |
+| `1` | 127,679 |
+
+### Mapping file
+
 File: `NF-UNSW-NB15-v3/NF-UNSW-NB15-v3_map.json`
 
 ```json
@@ -139,91 +151,94 @@ File: `NF-UNSW-NB15-v3/NF-UNSW-NB15-v3_map.json`
 }
 ```
 
-Map coverage check:
-- dataset attack labels: `10`
-- map keys: `10`
-- missing keys: none
-- extra keys: none
+Coverage status: 10 dataset classes mapped, 0 missing keys, 0 extra keys.
 
 ---
 
-## 3) NF-CICIDS2018-v3 (final state)
+## Final State: NF-CICIDS2018-v3
 
-### 3.1 Input and streaming strategy
-- Input file: `NF-CICIDS2018-v3/data/NF-CICIDS2018-v3.csv`
-- Data is processed in streaming chunks (memory-safe), not as one in-memory frame.
-- Raw rows scanned per pass: `20,115,529`
-- Chunks per pass: `81`
+### Input and Output
 
-### 3.2 Cleaning and dedup results (per full pass)
-- Rows after clean (before dedup): `20,115,529`
-- Local duplicate hash removals: `628,445`
-- Cross-chunk duplicate hash removals: `29`
-- Rows after dedup: `19,487,055`
+| Item | Value |
+| --- | --- |
+| Input file | `NF-CICIDS2018-v3/data/NF-CICIDS2018-v3.csv` |
+| Output file | `NF-CICIDS2018-v3/NF-CICIDS2018-v3.csv` |
+| Output shape | `300,000 × 51` |
+| Benign minimum fraction constraint | `0.33` |
 
-### 3.3 Sampling objective and constraints
-- Target final rows: `300,000`
-- Benign minimum fraction: `0.33`
-- Effective benign target: `99,000`
-- Attack budget: `201,000`
-- Fixed keep requests:
-  - `DDOS_attack-LOIC-UDP`: `3,450`
-  - `Brute_Force_-Web`: `1,618`
-  - `Brute_Force_-XSS`: `480`
-  - `SQL_Injection`: `440`
-- Fixed keep assigned (capped by availability after clean+dedup):
-  - `DDOS_attack-LOIC-UDP`: `1,725`
-  - `Brute_Force_-Web`: `1,618`
-  - `Brute_Force_-XSS`: `460`
-  - `SQL_Injection`: `440`
-- Fixed keep shortfall:
-  - `DDOS_attack-LOIC-UDP`: `1,725`
-  - `Brute_Force_-Web`: `0`
-  - `Brute_Force_-XSS`: `20`
-  - `SQL_Injection`: `0`
+### Streaming and deduplication statistics
 
-### 3.4 Target allocation mechanism
-1. Build class counts and family counts from cleaned+deduped data.
-2. Reserve fixed-kept class counts first.
-3. Allocate remaining attack budget across families as evenly as possible with no oversampling.
-4. Allocate each family target across classes as evenly as possible with no oversampling.
-5. Run deterministic per-class reservoir sampling.
-6. Write only selected rows to final CSV.
+| Metric | Count |
+| --- | ---: |
+| Chunks processed per pass | 81 |
+| Raw rows scanned per pass | 20,115,529 |
+| Rows after cleaning (pre-dedup) | 20,115,529 |
+| Local duplicate-hash removals | 628,445 |
+| Cross-chunk duplicate-hash removals | 29 |
+| Rows after deduplication | 19,487,055 |
 
-### 3.5 Final output shape
-- Final shape: `300,000 x 51`
+### Sampling constraints and fixed minority retention
 
-### 3.6 Final class distribution (`Attack`)
-- `Benign`: `99,000`
-- `Bot`: `39,352`
-- `Infilteration`: `39,351`
-- `DDOS_attack-HOIC`: `19,676`
-- `FTP-BruteForce`: `19,676`
-- `SSH-Bruteforce`: `19,676`
-- `DDoS_attacks-LOIC-HTTP`: `19,675`
-- `DoS_attacks-GoldenEye`: `9,838`
-- `DoS_attacks-Hulk`: `9,838`
-- `DoS_attacks-SlowHTTPTest`: `9,838`
-- `DoS_attacks-Slowloris`: `9,837`
-- `DDOS_attack-LOIC-UDP`: `1,725`
-- `Brute_Force_-Web`: `1,618`
-- `Brute_Force_-XSS`: `460`
-- `SQL_Injection`: `440`
+Requested fixed keeps:
 
-### 3.7 Final binary label distribution (`Label`)
-- `0`: `99,000`
-- `1`: `201,000`
+- `DDOS_attack-LOIC-UDP`: 3,450
+- `Brute_Force_-Web`: 1,618
+- `Brute_Force_-XSS`: 480
+- `SQL_Injection`: 440
 
-### 3.8 Final family distribution (using current map)
-- `BENIGN`: `99,000`
-- `DDoS`: `41,076`
-- `Bot`: `39,352`
-- `Brute Force`: `39,352`
-- `DoS`: `39,351`
-- `Infiltration`: `39,351`
-- `Web Attack`: `2,518`
+Assigned after availability checks:
 
-### 3.9 Final mapping state
+- `DDOS_attack-LOIC-UDP`: 1,725
+- `Brute_Force_-Web`: 1,618
+- `Brute_Force_-XSS`: 460
+- `SQL_Injection`: 440
+
+Shortfall:
+
+- `DDOS_attack-LOIC-UDP`: 1,725
+- `Brute_Force_-XSS`: 20
+
+### Final class distribution
+
+| Attack class | Count |
+| --- | ---: |
+| Benign | 99,000 |
+| Bot | 39,352 |
+| Infilteration | 39,351 |
+| DDOS_attack-HOIC | 19,676 |
+| FTP-BruteForce | 19,676 |
+| SSH-Bruteforce | 19,676 |
+| DDoS_attacks-LOIC-HTTP | 19,675 |
+| DoS_attacks-GoldenEye | 9,838 |
+| DoS_attacks-Hulk | 9,838 |
+| DoS_attacks-SlowHTTPTest | 9,838 |
+| DoS_attacks-Slowloris | 9,837 |
+| DDOS_attack-LOIC-UDP | 1,725 |
+| Brute_Force_-Web | 1,618 |
+| Brute_Force_-XSS | 460 |
+| SQL_Injection | 440 |
+
+### Final label distribution
+
+| Label | Count |
+| --- | ---: |
+| `0` | 99,000 |
+| `1` | 201,000 |
+
+### Final family distribution
+
+| Family | Count |
+| --- | ---: |
+| BENIGN | 99,000 |
+| DDoS | 41,076 |
+| Bot | 39,352 |
+| Brute Force | 39,352 |
+| DoS | 39,351 |
+| Infiltration | 39,351 |
+| Web Attack | 2,518 |
+
+### Mapping file
+
 File: `NF-CICIDS2018-v3/NF-CICIDS2018-v3_map.json`
 
 ```json
@@ -246,20 +261,26 @@ File: `NF-CICIDS2018-v3/NF-CICIDS2018-v3_map.json`
 }
 ```
 
-Map coverage check:
-- dataset attack labels: `15`
-- map keys: `15`
-- missing keys: none
-- extra keys: none
+Coverage status: 15 dataset classes mapped, 0 missing keys, 0 extra keys.
 
 ---
 
-## 4) Authoritative references used during cleaning-rule design
+## Data Products
 
-- UQ NF dataset portal: `https://staff.itee.uq.edu.au/marius/NIDS_datasets/`
-- NF-UNSW-NB15-v3 record: `https://researchdata.edu.au/nf-unsw-nb15-v3/3485172`
-- Temporal analysis paper (NFv3 context): `https://arxiv.org/abs/2503.04404`
-- IANA protocol numbers: `https://www.iana.org/assignments/protocol-numbers`
-- RFC 791 (IPv4 header semantics): `https://www.rfc-editor.org/rfc/rfc791`
-- RFC 6335 (port number ranges): `https://www.rfc-editor.org/rfc/rfc6335`
+- `NF-UNSW-NB15-v3/NF-UNSW-NB15-v3.csv`
+- `NF-UNSW-NB15-v3/NF-UNSW-NB15-v3_summary.json`
+- `NF-UNSW-NB15-v3/NF-UNSW-NB15-v3_map.json`
+- `NF-CICIDS2018-v3/NF-CICIDS2018-v3.csv`
+- `NF-CICIDS2018-v3/NF-CICIDS2018-v3_summary.json`
+- `NF-CICIDS2018-v3/NF-CICIDS2018-v3_map.json`
 
+---
+
+## References
+
+- UQ NIDS dataset portal: `https://staff.itee.uq.edu.au/marius/NIDS_datasets/`
+- NF-UNSW-NB15-v3 metadata record: `https://researchdata.edu.au/nf-unsw-nb15-v3/3485172`
+- Temporal analysis of NetFlow datasets (NFv3 context): `https://arxiv.org/abs/2503.04404`
+- IANA protocol numbers registry: `https://www.iana.org/assignments/protocol-numbers`
+- RFC 791 (IPv4 header fields): `https://www.rfc-editor.org/rfc/rfc791`
+- RFC 6335 (port namespace and ranges): `https://www.rfc-editor.org/rfc/rfc6335`

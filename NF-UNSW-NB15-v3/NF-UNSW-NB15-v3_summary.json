@@ -242,7 +242,7 @@
   "notes": [
     "Exact duplicate rows were removed (--drop-duplicates)."
   ],
-  "output_rows": 255358,
+  "output_rows": 191423,
   "output_columns": 51,
   "dtypes": {
     "L4_SRC_PORT": "int64",
@@ -298,7 +298,7 @@
     "Attack": "category"
   },
   "attack_distribution": {
-    "Benign": 127679,
+    "Benign": 63744,
     "Exploits": 42744,
     "Fuzzers": 33816,
     "Generic": 19651,
@@ -310,8 +310,8 @@
     "Worms": 158
   },
   "label_distribution": {
-    "0": 127679,
-    "1": 127679
+    "1": 127679,
+    "0": 63744
   },
   "sources": [
     {
@@ -355,15 +355,15 @@
       "columns": 55
     },
     "after_balance_50_50": {
-      "rows": 255358,
+      "rows": 191423,
       "columns": 55,
       "label_distribution": {
-        "0": 127679,
-        "1": 127679
+        "1": 127679,
+        "0": 63744
       }
     },
     "after_drop_columns": {
-      "rows": 255358,
+      "rows": 191423,
       "columns": 51,
       "dropped_columns": [
         "IPV4_SRC_ADDR",
@@ -380,13 +380,14 @@
       "benign": 2222930,
       "attack": 127679
     },
-    "benign_rows_removed": 2095251,
-    "note": "Benign downsampled to match attack count (50:50).",
+    "target_benign_fraction": 0.333,
+    "benign_rows_removed": 2159186,
+    "note": "Benign downsampled to target 33.3% benign share (computed from current attack count, no oversampling).",
     "after_counts": {
-      "benign": 127679,
+      "benign": 63744,
       "attack": 127679
     },
-    "output_rows": 255358
+    "output_rows": 191423
   },
   "drop_columns": {
     "requested": [
