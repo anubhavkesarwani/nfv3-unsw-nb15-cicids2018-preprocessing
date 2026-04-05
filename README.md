@@ -19,7 +19,7 @@ Downsampling was applied to address extreme class-prior imbalance, particularly 
 
 The procedure is strictly downsample-only (no oversampling or synthetic generation). In UNSW, benign is downsampled while attack observations are retained; in CICIDS2018, benign and oversubscribed attack classes are downsampled under explicit constraints. This design preserves empirical observations and improves computational tractability while maintaining low-frequency attack evidence.
 
-### Dataset-Specific Sampling Justification
+### Dataset Sampling Justification
 
 Sampling was specified separately for each dataset because the empirical class structures and operational constraints differ.
 
@@ -42,24 +42,24 @@ All selections satisfy integer and feasibility constraints:
 
 #### NF-UNSW-NB15-v3
 
-Define total retained attack count as `A = sum_{c != B} n_c`, and set benign-prior target `alpha = 1/3`.
+Define total retained attack count as `A = sum_{c != B} n_c`, and set target binary parity `alpha = 0.5`.
 
-The design objective is to preserve all attack observations while setting benign prevalence near `alpha`:
+The design objective is to preserve all attack observations while enforcing exact binary balance:
 
 `m_c = n_c, for all c != B`
 
-`m_B = round((alpha / (1 - alpha)) * A)`
+`m_B = round((alpha / (1 - alpha)) * A)` with `alpha = 0.5`
 
-With `alpha = 1/3`, this reduces to `m_B = round(A / 2)` and thus `N = A + m_B ~ 1.5A`. This formulation explicitly maximizes attack retention under a controlled benign prior.
+This reduces to `m_B = A` and thus `N = 2A`. The resulting dataset is 255,358 rows with exact 50:50 benign-to-attack parity. This formulation maximizes attack retention while balancing class representation.
 
 #### NF-CICIDS2018-v3
 
-For CICIDS2018, selection was formulated as constrained class allocation with fixed total size and family-balance pressure.
+For CICIDS2018, selection was formulated as constrained class allocation with binary parity and family-balance pressure.
 
 Primary constraints:
 
-- `sum_c m_c = 300,000` (fixed computational budget),
-- `m_B >= 0.33 * 300,000` (minimum benign support),
+- `sum_{c in B} m_c = sum_{c in A} m_c` (binary parity),
+- `m_B >= 0.5 * N_total` (minimum benign support),
 - `m_c >= min(r_c, n_c), for c in S` (minority preservation),
 - `0 <= m_c <= n_c, for all c in C`.
 
@@ -92,7 +92,7 @@ The resulting datasets are intended for controlled model development and compara
 
 ---
 
-## Shared Processing Protocol
+## Processing Protocol
 
 The following procedure was applied in both pipelines.
 
@@ -150,301 +150,14 @@ The following procedure was applied in both pipelines.
 
 ---
 
-## Final State: NF-UNSW-NB15-v3
-
-### Input and Output
-
-| Item | Value |
-| --- | --- |
-| Input file | `NF-UNSW-NB15-v3/data/NF-UNSW-NB15-v3.csv` |
-| Input shape | `2,365,424 × 55` |
-| Output file | `NF-UNSW-NB15-v3/NF-UNSW-NB15-v3.csv` |
-| Output shape | `191,423 × 51` |
-
-### Non-zero cleaning effects
-
-| Metric | Count |
-| --- | ---: |
-| `SRC_TO_DST_SECOND_BYTES_inf_to_nan` | 59,068 |
-| `DST_TO_SRC_SECOND_BYTES_inf_to_nan` | 122,493 |
-| `SRC_TO_DST_SECOND_BYTES_zero_duration_nonfinite_fixed` | 122,493 |
-| `DST_TO_SRC_SECOND_BYTES_zero_duration_nonfinite_fixed` | 122,493 |
-
-### Deduplication
-
-| Metric | Count |
-| --- | ---: |
-| Exact duplicates detected | 14,815 |
-| Exact duplicates removed | 14,815 |
-| Rows after clean + dedup | 2,350,609 |
-
-### Class-control step
-
-Benign traffic was downsampled to target approximately **33.3%** of final rows while preserving all attack rows after cleaning and deduplication.
-
-| Metric | Count |
-| --- | ---: |
-| Benign before downsampling | 2,222,930 |
-| Attack before downsampling | 127,679 |
-| Benign removed | 2,159,186 |
-| Benign after downsampling | 63,744 |
-| Attack after downsampling | 127,679 |
-| Final benign share | 33.3001% |
-
-### Initial vs Final Class Counts
-
-| Class | Initial Count | Final Count | Description |
-| --- | ---: | ---: | --- |
-| Benign | 2,222,930 | 63,744 | Normal unmalicious flows |
-| Fuzzers | 33,816 | 33,816 | An attack in which the attacker sends large amounts of random data which cause a system to crash and also aim to discover security vulnerabilities in a system. |
-| Analysis | 1,226 | 1,226 | A group that presents a variety of threats that target web applications through ports, emails and scripts. |
-| Backdoor | 4,658 | 4,658 | A technique that aims to bypass security mechanisms by replying to specific constructed client applications. |
-| DoS | 5,971 | 5,971 | Denial of Service is an attempt to overload a computer system's resources with the aim of preventing access to or availability of its data. |
-| Exploits | 42,744 | 42,744 | Are sequences of commands controlling the behaviour of a host through a known vulnerability. |
-| Generic | 19,651 | 19,651 | A method that targets cryptography and causes a collision with each block-cipher. |
-| Reconnaissance | 17,074 | 17,074 | A technique for gathering information about a network host and is also known as a probe. |
-| Shellcode | 2,381 | 2,381 | A malware that penetrates a code to control a victim's host. |
-| Worms | 158 | 158 | Attacks that replicate themselves and spread to other computers. |
-
-### Final attack distribution
-
-| Attack class | Count | Share |
-| --- | ---: | ---: |
-| Benign | 63,744 | 33.3001% |
-| Exploits | 42,744 | 22.3296% |
-| Fuzzers | 33,816 | 17.6656% |
-| Generic | 19,651 | 10.2657% |
-| Reconnaissance | 17,074 | 8.9195% |
-| DoS | 5,971 | 3.1193% |
-| Backdoor | 4,658 | 2.4334% |
-| Shellcode | 2,381 | 1.2438% |
-| Analysis | 1,226 | 0.6405% |
-| Worms | 158 | 0.0825% |
-
-### Final label distribution
-
-| Label | Count |
-| --- | ---: |
-| `0` | 63,744 |
-| `1` | 127,679 |
-
-### Mapping file
-
-File: `NF-UNSW-NB15-v3/NF-UNSW-NB15-v3_map.json`
-
-```json
-{
-  "Analysis": "Analysis",
-  "Benign": "BENIGN",
-  "Backdoor": "Backdoor",
-  "DoS": "DoS",
-  "Exploits": "Exploits",
-  "Fuzzers": "Fuzzers",
-  "Generic": "Generic",
-  "Reconnaissance": "Reconnaissance",
-  "Shellcode": "Shellcode",
-  "Worms": "Worms"
-}
-```
-
-Coverage status: 10 dataset classes mapped, 0 missing keys, 0 extra keys.
-
----
-
-## Final State: NF-CICIDS2018-v3
-
-### Input and Output
-
-| Item | Value |
-| --- | --- |
-| Input file | `NF-CICIDS2018-v3/data/NF-CICIDS2018-v3.csv` |
-| Output file | `NF-CICIDS2018-v3/NF-CICIDS2018-v3.csv` |
-| Output shape | `300,000 × 51` |
-| Benign minimum fraction constraint | `0.33` |
-
-### Streaming and deduplication statistics
-
-| Metric | Count |
-| --- | ---: |
-| Chunks processed per pass | 81 |
-| Raw rows scanned per pass | 20,115,529 |
-| Rows after cleaning (pre-dedup) | 20,115,529 |
-| Local duplicate-hash removals | 628,445 |
-| Cross-chunk duplicate-hash removals | 29 |
-| Rows after deduplication | 19,487,055 |
-
-### Sampling constraints and fixed minority retention
-
-Requested fixed keeps:
-
-- `DDOS_attack-LOIC-UDP`: 3,450
-- `Brute_Force_-Web`: 1,618
-- `Brute_Force_-XSS`: 480
-- `SQL_Injection`: 440
-
-Assigned after availability checks:
-
-- `DDOS_attack-LOIC-UDP`: 1,725
-- `Brute_Force_-Web`: 1,618
-- `Brute_Force_-XSS`: 460
-- `SQL_Injection`: 440
-
-Shortfall:
-
-- `DDOS_attack-LOIC-UDP`: 1,725
-- `Brute_Force_-XSS`: 20
-
-### Initial vs Final Family Counts
-
-| Class | Initial Count | Final Count | Description |
-| --- | ---: | ---: | --- |
-| Benign | 17,392,754 | 99,000 | Normal unmalicious flows |
-| Brute Force | 287,597 | 39,352 | A technique that aims to obtain usernames and password credentials by accessing a list of predefined possibilities |
-| Bot | 111,460 | 39,352 | An attack that enables an attacker to remotely control several hijacked computers to perform malicious activities. |
-| DoS | 254,296 | 39,351 | An attempt to overload a computer system's resources with the aim of preventing access to or availability of its data. |
-| DDoS | 1,322,625 | 41,076 | An attempt similar to DoS but has multiple different distributed sources. |
-| Infiltration | 115,805 | 39,351 | An inside attack that sends a malicious file via an email to exploit an application and is followed by a backdoor that scans the network for other vulnerabilities |
-| Web Attack | 2,518 | 2,518 | A group that includes SQL injections, command injections and unrestricted file uploads |
-
-### Final class distribution
-
-| Attack class | Count |
-| --- | ---: |
-| Benign | 99,000 |
-| Bot | 39,352 |
-| Infilteration | 39,351 |
-| DDOS_attack-HOIC | 19,676 |
-| FTP-BruteForce | 19,676 |
-| SSH-Bruteforce | 19,676 |
-| DDoS_attacks-LOIC-HTTP | 19,675 |
-| DoS_attacks-GoldenEye | 9,838 |
-| DoS_attacks-Hulk | 9,838 |
-| DoS_attacks-SlowHTTPTest | 9,838 |
-| DoS_attacks-Slowloris | 9,837 |
-| DDOS_attack-LOIC-UDP | 1,725 |
-| Brute_Force_-Web | 1,618 |
-| Brute_Force_-XSS | 460 |
-| SQL_Injection | 440 |
-
-### Final label distribution
-
-| Label | Count |
-| --- | ---: |
-| `0` | 99,000 |
-| `1` | 201,000 |
-
-### Final family distribution
-
-| Family | Count |
-| --- | ---: |
-| BENIGN | 99,000 |
-| DDoS | 41,076 |
-| Bot | 39,352 |
-| Brute Force | 39,352 |
-| DoS | 39,351 |
-| Infiltration | 39,351 |
-| Web Attack | 2,518 |
-
-### Mapping file
-
-File: `NF-CICIDS2018-v3/NF-CICIDS2018-v3_map.json`
-
-```json
-{
-  "Benign": "BENIGN",
-  "DDOS_attack-HOIC": "DDoS",
-  "DDoS_attacks-LOIC-HTTP": "DDoS",
-  "DDOS_attack-LOIC-UDP": "DDoS",
-  "DoS_attacks-Hulk": "DoS",
-  "DoS_attacks-GoldenEye": "DoS",
-  "DoS_attacks-Slowloris": "DoS",
-  "DoS_attacks-SlowHTTPTest": "DoS",
-  "FTP-BruteForce": "Brute Force",
-  "SSH-Bruteforce": "Brute Force",
-  "Bot": "Bot",
-  "Infilteration": "Infiltration",
-  "Brute_Force_-Web": "Web Attack",
-  "Brute_Force_-XSS": "Web Attack",
-  "SQL_Injection": "Web Attack"
-}
-```
-
-Coverage status: 15 dataset classes mapped, 0 missing keys, 0 extra keys.
-
----
-
 ## Data Products
 
-- `NF-UNSW-NB15-v3/NF-UNSW-NB15-v3.csv`
-- `NF-UNSW-NB15-v3/NF-UNSW-NB15-v3_summary.json`
-- `NF-UNSW-NB15-v3/NF-UNSW-NB15-v3_map.json`
-- `NF-CICIDS2018-v3/NF-CICIDS2018-v3.csv`
-- `NF-CICIDS2018-v3/NF-CICIDS2018-v3_summary.json`
-- `NF-CICIDS2018-v3/NF-CICIDS2018-v3_map.json`
-
----
-
-# Further Note: Secondary 50:50 Rebalancing Audit
-
-This section documents an additional deterministic rebalancing stage applied after the previously prepared datasets. The resulting files are saved as `dataset.csv` in each dataset directory, with corresponding machine-readable audit records in `dataset_rebalance_report.json`.
-
-Methodological characteristics of this stage:
-
-- Binary target ratio: `Label 0 : Label 1 = 1 : 1`
-- Downsample-only procedure (no oversampling)
-- Minority preservation on the downsampled side (threshold defined in each audit JSON)
-- Deterministic allocation with `random_state = 0`
-
-## Rebalance Artifacts
-
 - `NF-UNSW-NB15-v3/dataset.csv`
-- `NF-UNSW-NB15-v3/dataset_rebalance_report.json`
+- `NF-UNSW-NB15-v3/preparation_report.json`
+- `NF-UNSW-NB15-v3/map.json`
 - `NF-CICIDS2018-v3/dataset.csv`
-- `NF-CICIDS2018-v3/dataset_rebalance_report.json`
-
-## Aggregate Outcomes
-
-| Dataset | Rows Before | Rows After | Label 0 After | Label 1 After | Max Abs Attack-Share Delta | Minority Preservation Rate |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| NF-UNSW-NB15-v3 | 191,423 | 127,488 | 63,744 | 63,744 | 0.018704 | 100.00% |
-| NF-CICIDS2018-v3 | 300,000 | 198,000 | 99,000 | 99,000 | 0.008842 | 100.00% |
-
-Interpretation: the second-stage rebalance achieved exact binary parity in both datasets while preserving all identified minority classes on the downsampled side.
-
-## Distribution Change: NF-UNSW-NB15-v3
-
-Mapping source: `NF-UNSW-NB15-v3/NF-UNSW-NB15-v3_map.json`
-
-| Family | Initial Count | Final Count | Absolute Change | Percent Change |
-| --- | ---: | ---: | ---: | ---: |
-| BENIGN | 63,744 | 63,744 | 0 | 0.00% |
-| Exploits | 42,744 | 20,690 | -22,054 | -51.60% |
-| Fuzzers | 33,816 | 16,368 | -17,448 | -51.60% |
-| Generic | 19,651 | 9,512 | -10,139 | -51.60% |
-| Reconnaissance | 17,074 | 8,264 | -8,810 | -51.60% |
-| DoS | 5,971 | 2,890 | -3,081 | -51.60% |
-| Backdoor | 4,658 | 2,255 | -2,403 | -51.59% |
-| Shellcode | 2,381 | 2,381 | 0 | 0.00% |
-| Analysis | 1,226 | 1,226 | 0 | 0.00% |
-| Worms | 158 | 158 | 0 | 0.00% |
-
-Interpretation: most non-minority attack families were approximately halved, whereas identified minority families (`Shellcode`, `Analysis`, `Worms`) were preserved exactly.
-
-## Distribution Change: NF-CICIDS2018-v3
-
-Mapping source: `NF-CICIDS2018-v3/NF-CICIDS2018-v3_map.json`
-
-| Family | Initial Count | Final Count | Absolute Change | Percent Change |
-| --- | ---: | ---: | ---: | ---: |
-| BENIGN | 99,000 | 99,000 | 0 | 0.00% |
-| DDoS | 41,076 | 20,676 | -20,400 | -49.66% |
-| Bot | 39,352 | 18,952 | -20,400 | -51.84% |
-| Brute Force | 39,352 | 18,952 | -20,400 | -51.84% |
-| DoS | 39,351 | 18,951 | -20,400 | -51.84% |
-| Infiltration | 39,351 | 18,951 | -20,400 | -51.84% |
-| Web Attack | 2,518 | 2,518 | 0 | 0.00% |
-
-Interpretation: family-level attack mass was reduced nearly uniformly among non-minority families, while minority web-attack categories were preserved, maintaining rare-event evidence under exact binary balancing.
+- `NF-CICIDS2018-v3/preparation_report.json`
+- `NF-CICIDS2018-v3/map.json`
 
 ---
 
